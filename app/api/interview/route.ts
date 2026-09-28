@@ -1,5 +1,6 @@
 import OpenAI from "openai";
 import {
+  API_KEY_HEADER,
   DEFAULT_QUESTIONS,
   MAX_QUESTIONS,
   MIN_QUESTIONS,
@@ -32,8 +33,13 @@ function toOpenAIMessages(messages: ChatMessage[]) {
 }
 
 export async function POST(request: Request) {
-  if (!process.env.OPENAI_API_KEY) {
-    return Response.json({ error: "伺服器未設定 OPENAI_API_KEY" }, { status: 500 });
+  // BYOK：使用使用者自己的 key，伺服器不儲存也不使用環境變數
+  const apiKey = request.headers.get(API_KEY_HEADER)?.trim();
+  if (!apiKey) {
+    return Response.json(
+      { error: "請先在設定中輸入你的 OpenAI API key", code: "missing_api_key" },
+      { status: 401 },
+    );
   }
 
   let body: { jobDescription?: string; totalQuestions?: number; messages?: ChatMessage[] };
@@ -57,8 +63,7 @@ export async function POST(request: Request) {
     );
   }
 
-  // 每次請求才建立 client，修改 .env.local 後不必重啟就會用到新的 key
-  const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  const openai = new OpenAI({ apiKey });
   const answered = messages.filter((m) => m.role === "candidate").length;
   const history = toOpenAIMessages(messages);
 
@@ -109,10 +114,18 @@ questionReviews 必須依序對應每一題，共 ${totalQuestions} 筆：
     const evaluation = JSON.parse(completion.choices[0]?.message.content ?? "{}") as Evaluation;
     return Response.json({ type: "evaluation", evaluation });
   } catch (error) {
-    console.error("[/api/interview]", error);
     if (error instanceof OpenAI.AuthenticationError) {
-      return Response.json({ error: "OpenAI API key 無效或已過期，請更新 .env.local" }, { status: 502 });
+      return Response.json(
+        { error: "你的 OpenAI API key 無效或已過期，請到設定更新", code: "invalid_api_key" },
+        { status: 401 },
+      );
     }
+    if (error instanceof OpenAI.APIError && error.status === 429) {
+      return Response.json({ error: "你的 OpenAI 額度不足或請求過於頻繁，請稍後再試" }, { status: 429 });
+    }
+    // 只記錄錯誤訊息，並遮蔽任何 sk- 開頭的字串，避免使用者的 key 出現在 log
+    const message = error instanceof Error ? error.message : String(error);
+    console.error("[/api/interview]", message.replace(/sk-[\w-]+/g, "sk-***"));
     return Response.json({ error: "AI 服務暫時無法回應，請稍後再試" }, { status: 502 });
   }
 }

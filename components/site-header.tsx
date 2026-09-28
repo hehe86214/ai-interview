@@ -1,4 +1,5 @@
 import Link from "next/link";
+import ApiKeySettings from "./api-key-settings";
 
 export function Logo() {
   return (
@@ -24,12 +25,16 @@ export default function SiteHeader() {
           <Link href="/#report" className="hover:text-ink">評分報告</Link>
           <Link href="/#faq" className="hover:text-ink">常見問題</Link>
         </nav>
-        <Link
-          href="/interview"
-          className="rounded-full bg-ink px-4 py-2 text-sm font-medium text-paper transition hover:bg-accent hover:text-accent-ink"
-        >
-          開始模擬面試
-        </Link>
+        <div className="flex items-center gap-2">
+          <ApiKeySettings />
+          <Link
+            href="/interview"
+            className="rounded-full bg-ink px-4 py-2 text-sm font-medium text-paper transition hover:bg-accent hover:text-accent-ink"
+          >
+            <span className="hidden sm:inline">開始模擬面試</span>
+            <span className="sm:hidden">開始面試</span>
+          </Link>
+        </div>
       </div>
     </header>
   );

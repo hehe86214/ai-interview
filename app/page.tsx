@@ -47,8 +47,12 @@ const faqs = [
     a: "不需要。打開就能直接開始模擬面試。",
   },
   {
-    q: "我的回答會被保存嗎？",
-    a: "面試內容只存在你的瀏覽器分頁中，重新整理或按「重新開始」就會清除。回答會送到 AI 模型產生題目與評分。",
+    q: "為什麼需要自己的 OpenAI API key？",
+    a: "Mock.ai 採用 BYOK（Bring Your Own Key）模式，使用你自己的 OpenAI 帳號額度。點右上角「設定 API key」貼上即可，費用由 OpenAI 依用量向你收取。",
+  },
+  {
+    q: "我的 API key 和回答會被保存嗎？",
+    a: "API key 只存在你瀏覽器的 localStorage，每次面試時隨請求送出、伺服器不會保存，也可以隨時在設定中移除。面試內容只存在目前的分頁，重新整理就會清除。",
   },
   {
     q: "支援哪些職缺？",
@@ -92,7 +96,7 @@ export default function Home() {
                 href="/interview"
                 className="group inline-flex items-center gap-2 rounded-full bg-accent px-6 py-3.5 font-medium text-accent-ink shadow-[0_8px_24px_-8px_var(--accent)] transition hover:-translate-y-0.5"
               >
-                免費開始模擬面試
+                立即開始模擬面試
                 <span className="transition-transform group-hover:translate-x-1">→</span>
               </Link>
               <a
@@ -105,7 +109,7 @@ export default function Home() {
             <dl className="mt-2 grid grid-cols-3 gap-8 border-t border-line pt-6">
               <Stat value="1–10" label="自訂題數" />
               <Stat value="~5 分" label="完成一場" />
-              <Stat value="0 元" label="免費使用" />
+              <Stat value="BYOK" label="自備 OpenAI key" />
             </dl>
           </div>
 
@@ -203,7 +207,7 @@ export default function Home() {
             <h2 className="text-3xl font-black sm:text-5xl">
               準備好了嗎？<span className="font-display font-normal italic">Let&apos;s practice.</span>
             </h2>
-            <p className="max-w-md opacity-85">不用註冊、不用下載，貼上職缺就能開始第一場模擬面試。</p>
+            <p className="max-w-md opacity-85">不用註冊、不用下載，設定好 API key、貼上職缺，就能開始第一場模擬面試。</p>
             <Link
               href="/interview"
               className="rounded-full bg-ink px-7 py-3.5 font-medium text-paper transition hover:-translate-y-0.5"
