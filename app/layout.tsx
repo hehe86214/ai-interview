@@ -18,8 +18,8 @@ const instrumentSerif = Instrument_Serif({
 });
 
 export const metadata: Metadata = {
-  title: "Mock.ai — AI 面試模擬器",
-  description: "貼上職缺描述，和 AI 面試官進行模擬面試，取得評分與每一題的示範回答。",
+  title: "Tripmate.ai — AI 旅遊規劃師",
+  description: "描述你的旅行想法，AI 旅遊規劃師會一步步了解需求，給你準備度評分與逐項行程建議。",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

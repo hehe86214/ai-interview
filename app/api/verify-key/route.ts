@@ -1,5 +1,5 @@
 import OpenAI from "openai";
-import { API_KEY_HEADER } from "@/lib/interview";
+import { API_KEY_HEADER } from "@/lib/plan";
 
 // 驗證使用者提供的 OpenAI API key 是否可用（不會儲存 key）
 export async function POST(request: Request) {

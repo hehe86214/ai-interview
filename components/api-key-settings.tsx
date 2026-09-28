@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { API_KEY_HEADER } from "@/lib/interview";
+import { API_KEY_HEADER } from "@/lib/plan";
 import { maskApiKey, onOpenSettings, openSettings, setApiKey, useApiKey } from "@/lib/api-key";
 
 type Status = { tone: "idle" | "ok" | "error"; text: string };
@@ -98,8 +98,8 @@ export default function ApiKeySettings() {
           </div>
 
           <p className="text-sm leading-6 text-ink-2">
-            Mock.ai 採用 <b>BYOK（自備金鑰）</b>模式：面試使用你自己的 OpenAI 帳號額度。
-            key 只會存在<b>這個瀏覽器</b>的 localStorage，每次面試時隨請求送出，伺服器不會保存。
+            Tripmate.ai 採用 <b>BYOK（自備金鑰）</b>模式：旅遊規劃使用你自己的 OpenAI 帳號額度。
+            key 只會存在<b>這個瀏覽器</b>的 localStorage，每次規劃時隨請求送出，伺服器不會保存。
           </p>
 
           {apiKey && (

@@ -8,15 +8,15 @@ export default function SiteFooter() {
         <div className="flex flex-col gap-3">
           <Logo />
           <p className="max-w-xs text-sm leading-6 text-ink-2">
-            用 AI 面試官反覆練習，把緊張留在模擬，把自信帶進真正的面試。
+            讓 AI 旅遊規劃師了解你的喜好，把煩惱留在出發前，把期待帶上旅途。
           </p>
         </div>
         <FooterColumn
           title="產品"
           links={[
-            { href: "/interview", label: "開始面試" },
+            { href: "/plan", label: "開始規劃" },
             { href: "/#features", label: "功能" },
-            { href: "/#report", label: "評分報告" },
+            { href: "/#report", label: "旅行報告" },
           ]}
         />
         <FooterColumn
@@ -36,8 +36,8 @@ export default function SiteFooter() {
       </div>
       <div className="border-t border-line">
         <div className="mx-auto flex max-w-6xl flex-col gap-2 px-4 py-5 text-xs text-muted sm:flex-row sm:items-center sm:justify-between sm:px-6">
-          <span>© {new Date().getFullYear()} Mock.ai. All rights reserved.</span>
-          <span className="font-display text-sm italic">Practice makes hired.</span>
+          <span>© {new Date().getFullYear()} Tripmate.ai. All rights reserved.</span>
+          <span className="font-display text-sm italic">Plan less, wander more.</span>
         </div>
       </div>
     </footer>

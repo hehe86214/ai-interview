@@ -8,51 +8,51 @@ import {
   MAX_QUESTIONS,
   MIN_QUESTIONS,
   type ChatMessage,
-  type Evaluation,
-} from "@/lib/interview";
+  type TripReport,
+} from "@/lib/plan";
 
-type InterviewResponse =
+type PlanResponse =
   | { type: "question"; questionNumber: number; totalQuestions: number; content: string }
-  | { type: "evaluation"; evaluation: Evaluation }
+  | { type: "report"; report: TripReport }
   | { error: string; code?: string };
 
-export default function InterviewPage() {
+export default function PlanPage() {
   const apiKey = useApiKey();
-  const [jobDescription, setJobDescription] = useState("");
+  const [tripDescription, setTripDescription] = useState("");
   const [totalQuestions, setTotalQuestions] = useState(DEFAULT_QUESTIONS);
   const [started, setStarted] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [answer, setAnswer] = useState("");
   const [currentQuestion, setCurrentQuestion] = useState(0);
-  const [evaluation, setEvaluation] = useState<Evaluation | null>(null);
+  const [report, setReport] = useState<TripReport | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (started) bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
-  }, [started, messages, loading, evaluation]);
+  }, [started, messages, loading, report]);
 
-  async function callInterview(history: ChatMessage[]) {
+  async function callPlanner(history: ChatMessage[]) {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch("/api/interview", {
+      const res = await fetch("/api/plan", {
         method: "POST",
         headers: { "Content-Type": "application/json", [API_KEY_HEADER]: getApiKey() ?? "" },
-        body: JSON.stringify({ jobDescription, totalQuestions, messages: history }),
+        body: JSON.stringify({ tripDescription, totalQuestions, messages: history }),
       });
-      const data: InterviewResponse = await res.json();
+      const data: PlanResponse = await res.json();
 
       if ("error" in data) {
         setError(data.error);
         if (data.code === "missing_api_key" || data.code === "invalid_api_key") openSettings();
       } else if (data.type === "question") {
-        setMessages([...history, { role: "interviewer", content: data.content }]);
+        setMessages([...history, { role: "planner", content: data.content }]);
         setCurrentQuestion(data.questionNumber);
       } else {
         setMessages(history);
-        setEvaluation(data.evaluation);
+        setReport(data.report);
       }
     } catch {
       setError("無法連線到伺服器");
@@ -62,13 +62,13 @@ export default function InterviewPage() {
   }
 
   function start() {
-    if (!jobDescription.trim()) return;
+    if (!tripDescription.trim()) return;
     if (!getApiKey()) {
       openSettings();
       return;
     }
     setStarted(true);
-    callInterview([]);
+    callPlanner([]);
   }
 
   function submitAnswer(e: React.FormEvent) {
@@ -76,22 +76,22 @@ export default function InterviewPage() {
     const text = answer.trim();
     if (!text || loading) return;
     setAnswer("");
-    const history = [...messages, { role: "candidate" as const, content: text }];
+    const history = [...messages, { role: "traveler" as const, content: text }];
     setMessages(history);
-    callInterview(history);
+    callPlanner(history);
   }
 
   function reset() {
     setStarted(false);
     setMessages([]);
     setAnswer("");
-    setEvaluation(null);
+    setReport(null);
     setError("");
     setCurrentQuestion(0);
   }
 
-  const answeredCount = messages.filter((m) => m.role === "candidate").length;
-  const awaitingAnswer = started && !evaluation && messages.at(-1)?.role === "interviewer";
+  const answeredCount = messages.filter((m) => m.role === "traveler").length;
+  const awaitingAnswer = started && !report && messages.at(-1)?.role === "planner";
 
   if (!started) {
     return (
@@ -99,9 +99,9 @@ export default function InterviewPage() {
         <div className="bg-grid pointer-events-none absolute inset-0" aria-hidden />
         <div className="animate-rise relative w-full max-w-2xl">
           <div className="mb-8 flex flex-col gap-2">
-            <span className="font-display text-lg italic text-accent">New session</span>
-            <h1 className="text-3xl font-black tracking-tight sm:text-4xl">設定你的模擬面試</h1>
-            <p className="text-ink-2">貼上職缺描述並選擇題數，面試官會根據內容為你出題。</p>
+            <span className="font-display text-lg italic text-accent">New trip</span>
+            <h1 className="text-3xl font-black tracking-tight sm:text-4xl">規劃你的下一趟旅行</h1>
+            <p className="text-ink-2">描述你想去的地方和旅行想法，並選擇問題數，規劃師會一步步了解你的需求。</p>
           </div>
 
           {apiKey === null && (
@@ -122,22 +122,22 @@ export default function InterviewPage() {
 
           <div className="flex flex-col gap-6 rounded-3xl border border-line bg-card p-6 shadow-xl shadow-ink/5 sm:p-8">
             <div className="flex flex-col gap-2">
-              <label htmlFor="jd" className="text-sm font-bold">
-                職缺描述 <span className="text-accent">*</span>
+              <label htmlFor="trip" className="text-sm font-bold">
+                旅行需求 <span className="text-accent">*</span>
               </label>
               <textarea
-                id="jd"
-                value={jobDescription}
-                onChange={(e) => setJobDescription(e.target.value)}
+                id="trip"
+                value={tripDescription}
+                onChange={(e) => setTripDescription(e.target.value)}
                 rows={9}
-                placeholder={"例如：\n前端工程師\n・熟悉 React、Next.js、TypeScript\n・2 年以上開發經驗\n・有效能優化經驗者佳"}
+                placeholder={"例如：\n11 月底和另一半去京都 5 天\n・想賞楓、逛寺廟和咖啡廳\n・預算每人 4 萬台幣\n・不喜歡太趕的行程"}
                 className="resize-y rounded-xl border border-line bg-paper p-4 text-sm leading-6 outline-none transition placeholder:text-muted focus:border-ink focus:ring-4 focus:ring-accent-soft"
               />
             </div>
 
             <div className="flex flex-col gap-3">
               <div className="flex items-baseline justify-between">
-                <span className="text-sm font-bold">題數</span>
+                <span className="text-sm font-bold">問題數</span>
                 <span className="text-xs text-muted">
                   {MIN_QUESTIONS}–{MAX_QUESTIONS} 題
                 </span>
@@ -145,7 +145,7 @@ export default function InterviewPage() {
               <div className="flex flex-wrap items-center gap-4">
                 <div className="flex items-center rounded-xl border border-line bg-paper">
                   <StepButton
-                    label="減少題數"
+                    label="減少問題數"
                     onClick={() => setTotalQuestions((n) => Math.max(MIN_QUESTIONS, n - 1))}
                     disabled={totalQuestions <= MIN_QUESTIONS}
                   >
@@ -153,7 +153,7 @@ export default function InterviewPage() {
                   </StepButton>
                   <span className="w-12 text-center font-display text-3xl tabular-nums">{totalQuestions}</span>
                   <StepButton
-                    label="增加題數"
+                    label="增加問題數"
                     onClick={() => setTotalQuestions((n) => Math.min(MAX_QUESTIONS, n + 1))}
                     disabled={totalQuestions >= MAX_QUESTIONS}
                   >
@@ -172,7 +172,7 @@ export default function InterviewPage() {
                           : "border-line text-ink-2 hover:border-ink"
                       }`}
                     >
-                      {n === 3 ? "快速 3 題" : n === 5 ? "標準 5 題" : "完整 10 題"}
+                      {n === 3 ? "快速 3 題" : n === 5 ? "標準 5 題" : "深度 10 題"}
                     </button>
                   ))}
                 </div>
@@ -181,10 +181,10 @@ export default function InterviewPage() {
 
             <button
               onClick={start}
-              disabled={!jobDescription.trim()}
+              disabled={!tripDescription.trim()}
               className="group inline-flex items-center justify-center gap-2 rounded-full bg-accent px-6 py-3.5 font-medium text-accent-ink transition hover:-translate-y-0.5 disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-40"
             >
-              開始面試
+              開始規劃
               <span className="transition-transform group-hover:translate-x-1">→</span>
             </button>
           </div>
@@ -200,9 +200,9 @@ export default function InterviewPage() {
         <div className="sticky top-16 z-20 -mx-4 flex flex-col gap-3 border-b border-line bg-paper/90 px-4 py-4 backdrop-blur-md sm:-mx-6 sm:px-6">
           <div className="flex items-center justify-between gap-4">
             <div className="min-w-0">
-              <div className="text-xs text-muted">模擬面試</div>
+              <div className="text-xs text-muted">旅遊規劃</div>
               <div className="truncate font-bold">
-                {evaluation ? "面試完成 · 評分報告" : `第 ${currentQuestion || 1} / ${totalQuestions} 題`}
+                {report ? "規劃完成 · 旅行報告" : `第 ${currentQuestion || 1} / ${totalQuestions} 題`}
               </div>
             </div>
             <button
@@ -217,7 +217,7 @@ export default function InterviewPage() {
               <span
                 key={i}
                 className={`h-1.5 flex-1 rounded-full transition-colors ${
-                  i < answeredCount ? "bg-accent" : i === answeredCount && !evaluation ? "bg-ink/30" : "bg-line"
+                  i < answeredCount ? "bg-accent" : i === answeredCount && !report ? "bg-ink/30" : "bg-line"
                 }`}
               />
             ))}
@@ -226,7 +226,7 @@ export default function InterviewPage() {
 
         <div className="flex flex-col gap-4">
           {messages.map((m, i) =>
-            m.role === "interviewer" ? (
+            m.role === "planner" ? (
               <div key={i} className="animate-rise flex max-w-[88%] gap-3 self-start">
                 <Avatar />
                 <p className="whitespace-pre-wrap rounded-2xl rounded-tl-sm border border-line bg-card px-4 py-3 text-sm leading-7">
@@ -252,13 +252,13 @@ export default function InterviewPage() {
                   <span className="typing-dot size-1.5 rounded-full bg-ink-2 [animation-delay:0.2s]" />
                   <span className="typing-dot size-1.5 rounded-full bg-ink-2 [animation-delay:0.4s]" />
                 </span>
-                {answeredCount >= totalQuestions ? "面試官正在撰寫評分報告…" : "面試官思考中…"}
+                {answeredCount >= totalQuestions ? "規劃師正在整理你的旅行報告…" : "規劃師思考中…"}
               </div>
             </div>
           )}
         </div>
 
-        {evaluation && <EvaluationReport evaluation={evaluation} onRestart={reset} />}
+        {report && <TripReportView report={report} onRestart={reset} />}
 
         {error && (
           <div className="flex items-center justify-between gap-4 rounded-xl border border-accent/40 bg-accent-soft px-4 py-3 text-sm text-ink">
@@ -267,7 +267,7 @@ export default function InterviewPage() {
               <button onClick={openSettings} className="font-bold text-ink-2 underline">
                 設定 API key
               </button>
-              <button onClick={() => callInterview(messages)} className="font-bold text-accent underline">
+              <button onClick={() => callPlanner(messages)} className="font-bold text-accent underline">
                 重試
               </button>
             </div>
@@ -287,7 +287,7 @@ export default function InterviewPage() {
               }}
               rows={3}
               autoFocus
-              placeholder="輸入你的回答…"
+              placeholder="輸入你的想法…"
               disabled={loading}
               className="resize-none bg-transparent px-2 pt-1 text-sm leading-6 outline-none placeholder:text-muted"
             />
@@ -342,14 +342,14 @@ function Avatar() {
 }
 
 function scoreLabel(score: number) {
-  if (score >= 85) return "表現優秀";
-  if (score >= 70) return "表現良好";
-  if (score >= 50) return "尚有進步空間";
-  return "需要加強";
+  if (score >= 85) return "準備萬全";
+  if (score >= 70) return "準備充分";
+  if (score >= 50) return "還需要一些規劃";
+  return "建議再多做準備";
 }
 
-function EvaluationReport({ evaluation, onRestart }: { evaluation: Evaluation; onRestart: () => void }) {
-  const score = Math.max(0, Math.min(100, Math.round(evaluation.score ?? 0)));
+function TripReportView({ report, onRestart }: { report: TripReport; onRestart: () => void }) {
+  const score = Math.max(0, Math.min(100, Math.round(report.score ?? 0)));
   const circumference = 2 * Math.PI * 52;
 
   return (
@@ -373,7 +373,7 @@ function EvaluationReport({ evaluation, onRestart }: { evaluation: Evaluation; o
           <div className="absolute inset-0 grid place-items-center text-center">
             <div>
               <div className="font-display text-5xl leading-none">{score}</div>
-              <div className="text-xs opacity-60">/ 100</div>
+              <div className="text-xs opacity-60">準備度</div>
             </div>
           </div>
         </div>
@@ -381,22 +381,22 @@ function EvaluationReport({ evaluation, onRestart }: { evaluation: Evaluation; o
           <span className="w-fit rounded-full bg-accent px-3 py-1 text-xs font-bold text-accent-ink">
             {scoreLabel(score)}
           </span>
-          <p className="leading-7 opacity-85">{evaluation.summary}</p>
+          <p className="leading-7 opacity-85">{report.summary}</p>
         </div>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <ListCard title="優點" tone="good" items={evaluation.strengths} />
-        <ListCard title="改進建議" tone="warn" items={evaluation.improvements} />
+        <ListCard title="已規劃好的部分" tone="good" items={report.highlights} />
+        <ListCard title="行前建議" tone="warn" items={report.reminders} />
       </div>
 
-      {evaluation.questionReviews?.length > 0 && (
+      {report.questionReviews?.length > 0 && (
         <div className="flex flex-col gap-4">
           <h2 className="mt-2 flex items-baseline gap-3 text-xl font-black">
-            逐題檢討
-            <span className="font-display text-base font-normal italic text-accent">& better answers</span>
+            逐項建議
+            <span className="font-display text-base font-normal italic text-accent">& travel tips</span>
           </h2>
-          {evaluation.questionReviews.map((r, i) => (
+          {report.questionReviews.map((r, i) => (
             <details
               key={i}
               open={i === 0}
@@ -409,12 +409,12 @@ function EvaluationReport({ evaluation, onRestart }: { evaluation: Evaluation; o
               </summary>
               <div className="flex flex-col gap-4 border-t border-line px-5 pb-5 pt-4">
                 <div>
-                  <div className="mb-1 text-xs font-bold text-muted">點評</div>
-                  <p className="text-sm leading-7 text-ink-2">{r.feedback}</p>
+                  <div className="mb-1 text-xs font-bold text-muted">規劃師解讀</div>
+                  <p className="text-sm leading-7 text-ink-2">{r.insight}</p>
                 </div>
                 <div className="rounded-xl border-l-4 border-accent bg-accent-soft/60 p-4">
-                  <div className="mb-1 text-xs font-bold text-accent">✦ 示範回答</div>
-                  <p className="whitespace-pre-wrap text-sm leading-7">{r.betterAnswer}</p>
+                  <div className="mb-1 text-xs font-bold text-accent">✦ 建議安排</div>
+                  <p className="whitespace-pre-wrap text-sm leading-7">{r.recommendation}</p>
                 </div>
               </div>
             </details>
@@ -426,7 +426,7 @@ function EvaluationReport({ evaluation, onRestart }: { evaluation: Evaluation; o
         onClick={onRestart}
         className="mx-auto mt-2 rounded-full bg-accent px-7 py-3.5 font-medium text-accent-ink transition hover:-translate-y-0.5"
       >
-        再練一場 →
+        規劃下一趟旅行 →
       </button>
     </section>
   );

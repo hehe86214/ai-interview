@@ -3,12 +3,21 @@
 import { useSyncExternalStore } from "react";
 
 // BYOK：使用者的 OpenAI API key 只存在瀏覽器的 localStorage，呼叫 API 時以 API_KEY_HEADER 帶上
-const STORAGE_KEY = "mock-ai:openai-api-key";
-const CHANGE_EVENT = "mock-ai:api-key-change";
+const STORAGE_KEY = "tripmate:openai-api-key";
+const LEGACY_STORAGE_KEY = "mock-ai:openai-api-key"; // 改名前（AI 面試版）使用的 key
+const CHANGE_EVENT = "tripmate:api-key-change";
 
 export function getApiKey(): string | null {
   try {
-    return localStorage.getItem(STORAGE_KEY);
+    const key = localStorage.getItem(STORAGE_KEY);
+    if (key) return key;
+    // 搬移舊版存的 key，避免使用者要重新輸入
+    const legacy = localStorage.getItem(LEGACY_STORAGE_KEY);
+    if (legacy) {
+      localStorage.setItem(STORAGE_KEY, legacy);
+      localStorage.removeItem(LEGACY_STORAGE_KEY);
+    }
+    return legacy;
   } catch {
     return null;
   }
@@ -43,7 +52,7 @@ export function maskApiKey(key: string) {
 }
 
 // 讓任何元件都能打開設定視窗
-const OPEN_SETTINGS_EVENT = "mock-ai:open-settings";
+const OPEN_SETTINGS_EVENT = "tripmate:open-settings";
 
 export function openSettings() {
   window.dispatchEvent(new Event(OPEN_SETTINGS_EVENT));
